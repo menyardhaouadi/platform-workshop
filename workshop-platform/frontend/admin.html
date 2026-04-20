@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Admin Panel — TechInstitute</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="toastContainer" class="toast-container"></div>
+<div id="spinner" class="spinner-overlay hidden"><div class="spinner"></div></div>
+
+<!-- Workshop Modal -->
+<div id="wsModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="wsModalTitle">Add Workshop</h3>
+      <button class="modal-close" onclick="closeWsModal()">✕</button>
+    </div>
+    <input type="hidden" id="wsId">
+    <div class="form-group">
+      <label>Title *</label>
+      <input type="text" id="wsTitle" placeholder="Workshop title">
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <textarea id="wsDesc" rows="3" placeholder="Brief description..."></textarea>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Instructor</label>
+        <input type="text" id="wsInstructor" placeholder="Dr. Name">
+      </div>
+      <div class="form-group">
+        <label>Location</label>
+        <input type="text" id="wsLocation" placeholder="Room / Lab">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date *</label>
+        <input type="date" id="wsDate">
+      </div>
+      <div class="form-group">
+        <label>Time *</label>
+        <input type="time" id="wsTime">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Duration (min)</label>
+        <input type="number" id="wsDuration" value="120" min="30">
+      </div>
+      <div class="form-group">
+        <label>Capacity</label>
+        <input type="number" id="wsCapacity" value="30" min="1">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Image URL (optional)</label>
+      <input type="text" id="wsImage" placeholder="https://example.com/image.jpg">
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeWsModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="doSaveWorkshop()">💾 Save Workshop</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reply Modal -->
+<div id="replyModal" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Reply to Message</h3>
+      <button class="modal-close" onclick="closeReplyModal()">✕</button>
+    </div>
+    <input type="hidden" id="replyMsgId">
+    <div id="replyMsgPreview" style="background:var(--bg3);border-radius:var(--radius-sm);padding:14px;margin-bottom:16px;font-size:13.5px;color:var(--text2)"></div>
+    <div class="form-group">
+      <label>Your Reply</label>
+      <textarea id="replyText" rows="5" placeholder="Type your reply here..."></textarea>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeReplyModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="doSendReply()">📤 Send Reply</button>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-dot">🎓</div>
+      <span>TechInstitute</span>
+    </div>
+    <nav>
+      <div class="nav-section">
+        <div class="nav-label">Admin Panel</div>
+        <div class="nav-item active" onclick="showPage('stats')" id="nav-stats">
+          <span class="ni">📊</span> Dashboard
+        </div>
+        <div class="nav-item" onclick="showPage('workshops')" id="nav-workshops">
+          <span class="ni">🏫</span> Workshops
+        </div>
+        <div class="nav-item" onclick="showPage('messages')" id="nav-messages">
+          <span class="ni">💬</span> Messages
+          <span class="nav-badge hidden" id="msgBadge">0</span>
+        </div>
+        <div class="nav-item" onclick="showPage('users')" id="nav-users">
+          <span class="ni">👥</span> Students
+        </div>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-info">
+        <div class="user-avatar" style="background:linear-gradient(135deg,#e63946,#c1121f)">A</div>
+        <div class="user-details">
+          <div class="user-name" id="uName">Admin</div>
+          <div class="user-role" style="color:#e63946">Administrator</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-full" style="margin-top:8px;font-size:13px" onclick="doLogout()">🚪 Logout</button>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <div class="topbar">
+      <span class="topbar-title" id="topTitle">Dashboard</span>
+      <button class="btn btn-primary btn-sm" onclick="openWsModal()">+ Add Workshop</button>
+    </div>
+
+    <div class="content-area">
+
+      <!-- PAGE: stats -->
+      <div id="page-stats" class="page active">
+        <div class="page-header">
+          <h2>Dashboard Overview</h2>
+          <p>Platform statistics and workshop enrollment</p>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card blue">
+            <div class="stat-icon">👨‍🎓</div>
+            <div class="stat-value" id="statStudents">—</div>
+            <div class="stat-label">Total Students</div>
+          </div>
+          <div class="stat-card purple">
+            <div class="stat-icon">🏫</div>
+            <div class="stat-value" id="statWorkshops">—</div>
+            <div class="stat-label">Active Workshops</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-icon">✅</div>
+            <div class="stat-value" id="statRegs">—</div>
+            <div class="stat-label">Registrations</div>
+          </div>
+          <div class="stat-card orange">
+            <div class="stat-icon">✉️</div>
+            <div class="stat-value" id="statUnread">—</div>
+            <div class="stat-label">Unread Messages</div>
+          </div>
+        </div>
+        <div class="card" style="padding:22px">
+          <div class="section-header">
+            <h3>Workshop Enrollment</h3>
+          </div>
+          <div id="wsStatsContainer"></div>
+        </div>
+      </div>
+
+      <!-- PAGE: workshops -->
+      <div id="page-workshops" class="page">
+        <div class="page-header">
+          <h2>Manage Workshops</h2>
+          <p>Create, edit and delete workshops</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Title</th>
+                <th>Date & Time</th>
+                <th>Instructor</th>
+                <th>Students</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="wsTableBody">
+              <tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text2)">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- PAGE: messages -->
+      <div id="page-messages" class="page">
+        <div class="page-header">
+          <h2>Student Messages</h2>
+          <p>View and reply to messages from students</p>
+        </div>
+        <div class="messages-list" id="adminMsgList">
+          <div class="empty-state"><div class="empty-icon">⏳</div><h3>Loading...</h3></div>
+        </div>
+      </div>
+
+      <!-- PAGE: users -->
+      <div id="page-users" class="page">
+        <div class="page-header">
+          <h2>Registered Students</h2>
+          <p>All students on the platform</p>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Joined</th>
+              </tr>
+            </thead>
+            <tbody id="usersTableBody">
+              <tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text2)">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+  const PAGE_TITLES = {
+    stats: 'Dashboard', workshops: 'Manage Workshops',
+    messages: 'Student Messages', users: 'Registered Students'
+  };
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const user = loadSession();
+    if (!user) { window.location.href = 'index.html'; return; }
+    if (user.role !== 'admin') { window.location.href = 'dashboard.html'; return; }
+    currentUser = user;
+    document.getElementById('uName').textContent = user.name;
+    loadStats();
+    loadMsgBadge();
+  });
+
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    document.getElementById('nav-' + name)?.classList.add('active');
+    document.getElementById('topTitle').textContent = PAGE_TITLES[name] || name;
+    if (name === 'stats')      loadStats();
+    if (name === 'workshops')  loadWorkshopsTable();
+    if (name === 'messages')   loadMessages();
+    if (name === 'users')      loadUsers();
+  }
+
+  function loadStats() {
+    showSpinner();
+    getAdminStats()
+      .then(r => r.json())
+      .then(data => {
+        hideSpinner();
+        if (!data.success) return;
+        document.getElementById('statStudents').textContent  = data.students;
+        document.getElementById('statWorkshops').textContent = data.workshops;
+        document.getElementById('statRegs').textContent      = data.registrations;
+        document.getElementById('statUnread').textContent    = data.unread;
+        const c = document.getElementById('wsStatsContainer');
+        if (!data.workshop_stats?.length) { c.innerHTML = '<p style="color:var(--text2);font-size:13px">No workshops yet</p>'; return; }
+        c.innerHTML = data.workshop_stats.map(w => {
+          const pct = Math.min(100, Math.round((w.registered / w.capacity) * 100));
+          return `
+            <div class="prog-bar-wrap">
+              <div class="prog-labels">
+                <span style="font-weight:600;font-size:13px">${w.title}</span>
+                <span style="color:var(--text2);font-size:12px">${w.registered} / ${w.capacity} students (${pct}%)</span>
+              </div>
+              <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+            </div>`;
+        }).join('');
+      })
+      .catch(() => { hideSpinner(); showToast('Failed to load stats', 'error'); });
+  }
+
+  function loadWorkshopsTable() {
+    showSpinner();
+    getAdminWorkshops()
+      .then(r => r.json())
+      .then(data => {
+        hideSpinner();
+        const tbody = document.getElementById('wsTableBody');
+        if (!data.workshops?.length) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:30px;color:var(--text2)">No workshops. Click "+ Add Workshop" to create one.</td></tr>';
+          return;
+        }
+        tbody.innerHTML = data.workshops.map(w => `
+          <tr>
+            <td><strong>${w.title}</strong></td>
+            <td>${formatDate(w.date)}<br><span style="color:var(--text2);font-size:12px">${formatTime(w.time)} · ${w.duration}min</span></td>
+            <td>${w.instructor || '—'}</td>
+            <td>
+              <span class="badge badge-info">${w.student_count} / ${w.capacity}</span>
+            </td>
+            <td><span class="badge ${w.status==='active'?'badge-success':w.status==='cancelled'?'badge-danger':'badge-warn'}">${w.status}</span></td>
+            <td>
+              <div style="display:flex;gap:6px">
+                <button class="btn btn-ghost btn-sm" onclick="openWsModal(${JSON.stringify(w).replace(/"/g,'&quot;')})">✏️ Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="doDeleteWorkshop(${w.id})">🗑 Delete</button>
+              </div>
+            </td>
+          </tr>`).join('');
+      })
+      .catch(() => { hideSpinner(); showToast('Failed to load workshops', 'error'); });
+  }
+
+  function loadMessages() {
+    showSpinner();
+    getAdminMessages()
+      .then(r => r.json())
+      .then(data => {
+        hideSpinner();
+        const l = document.getElementById('adminMsgList');
+        if (!data.messages?.length) {
+          l.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><h3>No messages yet</h3></div>';
+          return;
+        }
+        l.innerHTML = data.messages.map(m => `
+          <div class="msg-item ${m.is_read?'':'unread'}">
+            <div class="msg-head">
+              <div>
+                <div class="msg-subject">${m.subject}</div>
+                <div class="msg-from">From: <strong>${m.sender_name}</strong> (${m.sender_email})</div>
+              </div>
+              <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+                <div class="msg-date">${new Date(m.created_at).toLocaleDateString()}</div>
+                ${!m.reply ? `<button class="btn btn-primary btn-sm" onclick="openReplyModal(${m.id},'${encodeURIComponent(m.subject)}','${encodeURIComponent(m.body)}')">↩ Reply</button>` : ''}
+              </div>
+            </div>
+            <div class="msg-body">${m.body}</div>
+            ${m.reply
+              ? `<div class="msg-reply"><div class="msg-reply-label">✓ Your reply · ${new Date(m.replied_at).toLocaleDateString()}</div>${m.reply}</div>`
+              : `<span class="badge badge-warn">Not replied yet</span>`}
+          </div>`).join('');
+        document.getElementById('msgBadge').classList.add('hidden');
+      })
+      .catch(() => { hideSpinner(); showToast('Failed to load messages', 'error'); });
+  }
+
+  function loadUsers() {
+    showSpinner();
+    fetch('../services/admin-service/get-users.php', { method:'POST', headers:{'Content-Type':'application/json'}, body:'{}' })
+      .then(r => r.json())
+      .then(data => {
+        hideSpinner();
+        const tbody = document.getElementById('usersTableBody');
+        if (!data.users?.length) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text2)">No users yet</td></tr>';
+          return;
+        }
+        tbody.innerHTML = data.users.map((u,i) => `
+          <tr>
+            <td style="color:var(--text2)">${i+1}</td>
+            <td><strong>${u.name}</strong></td>
+            <td>${u.email}</td>
+            <td><span class="badge ${u.role==='admin'?'badge-danger':'badge-info'}">${u.role}</span></td>
+            <td style="color:var(--text2);font-size:12px">${new Date(u.created_at).toLocaleDateString()}</td>
+          </tr>`).join('');
+      })
+      .catch(() => { hideSpinner(); showToast('Failed to load users', 'error'); });
+  }
+
+  function loadMsgBadge() {
+    getAdminMessages()
+      .then(r => r.json())
+      .then(data => {
+        const cnt = data.messages?.filter(m => !m.is_read).length || 0;
+        if (cnt > 0) {
+          const b = document.getElementById('msgBadge');
+          b.textContent = cnt;
+          b.classList.remove('hidden');
+        }
+      }).catch(() => {});
+  }
+
+  function openWsModal(ws) {
+    document.getElementById('wsId').value       = ws?.id || '';
+    document.getElementById('wsTitle').value     = ws?.title || '';
+    document.getElementById('wsDesc').value      = ws?.description || '';
+    document.getElementById('wsInstructor').value= ws?.instructor || '';
+    document.getElementById('wsLocation').value  = ws?.location || '';
+    document.getElementById('wsDate').value      = ws?.date?.substring(0,10) || '';
+    document.getElementById('wsTime').value      = ws?.time?.substring(0,5) || '';
+    document.getElementById('wsDuration').value  = ws?.duration || 120;
+    document.getElementById('wsCapacity').value  = ws?.capacity || 30;
+    document.getElementById('wsImage').value     = ws?.image || '';
+    document.getElementById('wsModalTitle').textContent = ws ? 'Edit Workshop' : 'Add Workshop';
+    document.getElementById('wsModal').classList.remove('hidden');
+  }
+
+  function closeWsModal() {
+    document.getElementById('wsModal').classList.add('hidden');
+  }
+
+  function doSaveWorkshop() {
+    const title = document.getElementById('wsTitle').value.trim();
+    const date  = document.getElementById('wsDate').value;
+    const time  = document.getElementById('wsTime').value;
+    if (!title) { showToast('Title is required', 'error'); return; }
+    if (!date)  { showToast('Date is required', 'error'); return; }
+    if (!time)  { showToast('Time is required', 'error'); return; }
+    const payload = {
+      id:          parseInt(document.getElementById('wsId').value) || 0,
+      title,
+      description: document.getElementById('wsDesc').value.trim(),
+      instructor:  document.getElementById('wsInstructor').value.trim(),
+      location:    document.getElementById('wsLocation').value.trim(),
+      date, time,
+      duration:    parseInt(document.getElementById('wsDuration').value) || 120,
+      capacity:    parseInt(document.getElementById('wsCapacity').value) || 30,
+      image:       document.getElementById('wsImage').value.trim()
+    };
+    showSpinner();
+    saveAdminWorkshop(payload)
+      .then(r => r.json())
+      .then(data => {
+        hideSpinner();
+        if (data.success) {
+          showToast(data.message, 'success');
+          closeWsModal();
+          loadWorkshopsTable();
+          loadStats();
+        } else {
+          showToast(data.message, 'error');
+        }
+      })
+      .catch(() => { hideSpinner(); showToast('Save failed', 'error'); });
+  }
+
+  function doDeleteWorkshop(id) {
+    if (!confirm('Delete this workshop? This also removes all registrations.')) return;
+    showSpinner();
+    deleteAdminWorkshop(id)
+      .then(r => r.json())
+      .then(data => {
+        hideSpinner();
+        if (data.success) {
+          showToast('Workshop deleted', 'info');
+          loadWorkshopsTable();
+          loadStats();
+        } else {
+          showToast(data.message, 'error');
+        }
+      })
+      .catch(() => { hideSpinner(); showToast('Delete failed', 'error'); });
+  }
+
+  function openReplyModal(id, subject, body) {
+    document.getElementById('replyMsgId').value = id;
+    document.getElementById('replyMsgPreview').innerHTML =
+      '<strong>' + decodeURIComponent(subject) + '</strong><br><span style="margin-top:5px;display:block">' + decodeURIComponent(body) + '</span>';
+    document.getElementById('replyText').value = '';
+    document.getElementById('replyModal').classList.remove('hidden');
+  }
+
+  function closeReplyModal() {
+    document.getElementById('replyModal').classList.add('hidden');
+  }
+
+  function doSendReply() {
+    const id    = parseInt(document.getElementById('replyMsgId').value);
+    const reply = document.getElementById('replyText').value.trim();
+    if (!reply) { showToast('Enter a reply', 'error'); return; }
+    showSpinner();
+    replyAdminMessage(id, reply)
+      .then(r => r.json())
+      .then(data => {
+        hideSpinner();
+        if (data.success) {
+          showToast('Reply sent!', 'success');
+          closeReplyModal();
+          loadMessages();
+          loadMsgBadge();
+        } else {
+          showToast(data.message, 'error');
+        }
+      })
+      .catch(() => { hideSpinner(); showToast('Reply failed', 'error'); });
+  }
+
+  function doLogout() {
+    showSpinner();
+    logoutUser().finally(() => {
+      hideSpinner();
+      clearSession();
+      window.location.href = 'index.html';
+    });
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>TechInstitute — Login</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="toastContainer" class="toast-container"></div>
+<div id="spinner" class="spinner-overlay hidden"><div class="spinner"></div></div>
+
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="logo-icon">🎓</div>
+      <h1>TechInstitute</h1>
+      <p>Workshops & Training Platform</p>
+    </div>
+
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchTab('login')">Sign In</div>
+      <div class="auth-tab" onclick="switchTab('register')">Register</div>
+    </div>
+
+    <div id="loginForm">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="lEmail" placeholder="your@email.com">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="lPass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+      <button class="btn btn-primary btn-full" onclick="doLogin()">Sign In →</button>
+      <div class="demo-hint">
+        <strong>Admin demo:</strong> admin@institute.com / password<br>
+        <strong>Student:</strong> Register a new account
+      </div>
+    </div>
+
+    <div id="registerForm" class="hidden">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="rName" placeholder="Your full name">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="rEmail" placeholder="your@email.com">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="rPass" placeholder="Min 6 chars">
+        </div>
+        <div class="form-group">
+          <label>Confirm</label>
+          <input type="password" id="rConfirm" placeholder="Repeat password">
+        </div>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="doRegister()">Create Account →</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (loadSession()) navigateTo();
+  });
+
+  function switchTab(tab) {
+    document.querySelectorAll('.auth-tab').forEach((t,i) => {
+      t.classList.toggle('active', (tab==='login'&&i===0)||(tab==='register'&&i===1));
+    });
+    document.getElementById('loginForm').classList.toggle('hidden', tab!=='login');
+    document.getElementById('registerForm').classList.toggle('hidden', tab!=='register');
+  }
+
+  function doLogin() {
+    const email = document.getElementById('lEmail').value.trim();
+    const pass  = document.getElementById('lPass').value;
+    if (!email || !pass) { showToast('Please fill in all fields', 'error'); return; }
+    if (!/\S+@\S+\.\S+/.test(email)) { showToast('Invalid email', 'error'); return; }
+    showSpinner();
+    loginUser({ email, password: pass })
+      .then(r => r.json())
+      .then(data => {
+        hideSpinner();
+        if (data.success) {
+          saveSession(data.user);
+          showToast('Welcome back, ' + data.user.name + '!', 'success');
+          setTimeout(navigateTo, 700);
+        } else {
+          alert(data.message);
+          showToast(data.message, 'error');
+        }
+      })
+      .catch(() => { hideSpinner(); showToast('Connection error. Is PHP running?', 'error'); });
+  }
+
+  function doRegister() {
+    const name    = document.getElementById('rName').value.trim();
+    const email   = document.getElementById('rEmail').value.trim();
+    const pass    = document.getElementById('rPass').value;
+    const confirm = document.getElementById('rConfirm').value;
+    if (!name||!email||!pass||!confirm) { showToast('All fields required', 'error'); return; }
+    if (!/\S+@\S+\.\S+/.test(email)) { showToast('Invalid email', 'error'); return; }
+    if (pass.length < 6) { showToast('Password min 6 characters', 'error'); return; }
+    if (pass !== confirm) { showToast('Passwords do not match', 'error'); return; }
+    showSpinner();
+    registerUser({ name, email, password: pass })
+      .then(r => r.json())
+      .then(data => {
+        hideSpinner();
+        if (data.success) {
+          saveSession(data.user);
+          showToast('Account created! Welcome ' + data.user.name, 'success');
+          setTimeout(navigateTo, 700);
+        } else {
+          alert(data.message);
+          showToast(data.message, 'error');
+        }
+      })
+      .catch(() => { hideSpinner(); showToast('Connection error', 'error'); });
+  }
+</script>
+</body>
+</html>
